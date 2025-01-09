@@ -1,0 +1,105 @@
+// Check if the user is already logged in from LocalStorage
+if(localStorage.getItem('loggedInUser')) {
+    showTodoList(localStorage.getItem('loggedInUser'));
+} else {
+    document.getElementById('login-container').style.display = 'block';
+}
+
+// Handle user sign-in
+document.getElementById('login-form').addEventListener('submit', function(event) {
+    event.preventDefault();
+    
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+
+    // Basic check for valid login (you can implement a real authentication system here)
+    if(username && password) {
+        localStorage.setItem('loggedInUser', username);
+        showTodoList(username);
+    } else {
+        document.getElementById('login-error').style.display = 'block';
+    }
+});
+
+// Show the to-do list after successful login
+function showTodoList(username) {
+    document.getElementById('login-container').style.display = 'none';
+    document.getElementById('todo-container').style.display = 'block';
+    document.getElementById('welcome-message').innerText = `Welcome, ${username}!`;
+
+    loadTasks();
+}
+
+// Handle task adding, completing, and deleting
+document.getElementById('add-task').addEventListener('click', function() {
+    const newTaskInput = document.getElementById('new-task');
+    const taskText = newTaskInput.value.trim();
+
+    if (taskText) {
+        addTask(taskText);
+        newTaskInput.value = ''; // Clear the input
+    }
+});
+
+// Load tasks from local storage
+function loadTasks() {
+    const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    const taskList = document.getElementById('task-list');
+    taskList.innerHTML = '';
+
+    tasks.forEach((task, index) => {
+        const li = document.createElement('li');
+        li.classList.toggle('completed', task.completed);
+
+        li.innerHTML = `
+            <span>${task.text}</span>
+            <input type="checkbox" ${task.completed ? 'checked' : ''} data-index="${index}" class="task-checkbox">
+            <button data-index="${index}" class="delete-task">Delete</button>
+        `;
+
+        taskList.appendChild(li);
+    });
+
+    // Event listener for checkboxes
+    document.querySelectorAll('.task-checkbox').forEach(function(checkbox) {
+        checkbox.addEventListener('change', function() {
+            const index = this.getAttribute('data-index');
+            toggleTaskCompletion(index);
+        });
+    });
+
+    // Event listener for delete buttons
+    document.querySelectorAll('.delete-task').forEach(function(button) {
+        button.addEventListener('click', function() {
+            const index = this.getAttribute('data-index');
+            deleteTask(index);
+        });
+    });
+}
+
+// Add a new task to local storage
+function addTask(taskText) {
+    const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    tasks.push({ text: taskText, completed: false });
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+
+    loadTasks(); // Reload tasks after adding
+}
+
+// Toggle task completion
+function toggleTaskCompletion(index) {
+    const tasks = JSON.parse(localStorage.getItem('tasks'));
+    tasks[index].completed = !tasks[index].completed;
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+
+    loadTasks(); // Reload tasks after update
+}
+
+// Delete a task
+function deleteTask(index) {
+    const tasks = JSON.parse(localStorage.getItem('tasks'));
+    tasks.splice(index, 1);
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+
+    loadTasks(); // Reload tasks after deletion
+}
